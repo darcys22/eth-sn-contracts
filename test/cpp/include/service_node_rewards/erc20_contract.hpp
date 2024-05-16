@@ -8,7 +8,7 @@
 
 class ERC20Contract {
 public:
-    ERC20Contract(const std::string& contractAddress, std::shared_ptr<Provider> provider);
+    ERC20Contract(const std::string& contractAddress, ethyl::Provider& provider);
 
     // Function to call the 'approve' method of the ERC20 token contract
     Transaction approve(const std::string& spender, uint64_t amount);
@@ -16,5 +16,5 @@ public:
 
 private:
     std::string contractAddress;
-    std::shared_ptr<Provider> provider;
+    ethyl::Provider& provider;
 };

@@ -1,8 +1,14 @@
 #include "service_node_rewards/service_node_rewards_contract.hpp"
+#include "ethyl/utils.hpp"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#include <nlohmann/json.hpp>
+#pragma GCC diagnostic pop
 
 #include <iostream>
 
-ServiceNodeRewardsContract::ServiceNodeRewardsContract(const std::string& _contractAddress, std::shared_ptr<Provider> _provider)
+ServiceNodeRewardsContract::ServiceNodeRewardsContract(const std::string& _contractAddress, ethyl::Provider& _provider)
         : contractAddress(_contractAddress), provider(_provider) {}
 
 Transaction ServiceNodeRewardsContract::addBLSPublicKey(const std::string& publicKey, const std::string& sig, const std::string& serviceNodePubkey, const std::string& serviceNodeSignature, const uint64_t fee) {
@@ -25,11 +31,11 @@ Transaction ServiceNodeRewardsContract::addBLSPublicKey(const std::string& publi
 
 ContractServiceNode ServiceNodeRewardsContract::serviceNodes(uint64_t index)
 {
-    ReadCallData callData            = {};
+    ethyl::ReadCallData callData            = {};
     std::string  indexABI            = utils::padTo32Bytes(utils::decimalToHex(index), utils::PaddingDirection::LEFT);
     callData.contractAddress         = contractAddress;
     callData.data                    = utils::getFunctionSignature("serviceNodes(uint64)") + indexABI;
-    nlohmann::json     callResult    = provider->callReadFunctionJSON(callData);
+    nlohmann::json     callResult    = provider.callReadFunctionJSON(callData);
     const std::string& callResultHex = callResult.get_ref<nlohmann::json::string_t&>();
     std::string_view   callResultIt  = utils::trimPrefix(callResultHex, "0x");
 
@@ -91,7 +97,7 @@ uint64_t ServiceNodeRewardsContract::serviceNodeIDs(const bls::PublicKey& pKey)
     std::string bytesSizeABI        = utils::padTo32Bytes(utils::decimalToHex(pKeyABI.size() / 2), utils::PaddingDirection::LEFT);
 
     // NOTE: Setup call data
-    ReadCallData callData    = {};
+    ethyl::ReadCallData callData    = {};
     callData.contractAddress = contractAddress;
 
     // NOTE: Fill in ABI
@@ -102,32 +108,32 @@ uint64_t ServiceNodeRewardsContract::serviceNodeIDs(const bls::PublicKey& pKey)
     callData.data += pKeyABI;
 
     // NOTE: Call function
-    nlohmann::json     callResult = provider->callReadFunctionJSON(callData);
+    nlohmann::json     callResult = provider.callReadFunctionJSON(callData);
     const std::string& resultHex  = callResult.get_ref<nlohmann::json::string_t&>();
     uint64_t           result     = utils::fromHexStringToUint64(resultHex);
     return result;
 }
 
 uint64_t ServiceNodeRewardsContract::serviceNodesLength() {
-    ReadCallData callData;
+    ethyl::ReadCallData callData;
     callData.contractAddress = contractAddress;
     callData.data = utils::getFunctionSignature("serviceNodesLength()");
-    std::string result = provider->callReadFunction(callData);
+    std::string result = provider.callReadFunction(callData);
     return utils::fromHexStringToUint64(result);
 }
 
 std::string ServiceNodeRewardsContract::designatedToken() {
-    ReadCallData callData;
+    ethyl::ReadCallData callData;
     callData.contractAddress = contractAddress;
     callData.data = utils::getFunctionSignature("designatedToken()");
-    return provider->callReadFunction(callData);
+    return provider.callReadFunction(callData);
 }
 
 std::string ServiceNodeRewardsContract::aggregatePubkeyString() {
-    ReadCallData callData    = {};
+    ethyl::ReadCallData callData    = {};
     callData.contractAddress = contractAddress;
     callData.data            = utils::getFunctionSignature("aggregatePubkey()");
-    return provider->callReadFunction(callData);
+    return provider.callReadFunction(callData);
 }
 
 bls::PublicKey ServiceNodeRewardsContract::aggregatePubkey() {
@@ -137,7 +143,7 @@ bls::PublicKey ServiceNodeRewardsContract::aggregatePubkey() {
 }
 
 Recipient ServiceNodeRewardsContract::viewRecipientData(const std::string& address) {
-    ReadCallData callData;
+    ethyl::ReadCallData callData;
     callData.contractAddress = contractAddress;
 
     std::string rewardAddressOutput = address;
@@ -146,7 +152,7 @@ Recipient ServiceNodeRewardsContract::viewRecipientData(const std::string& addre
     rewardAddressOutput = utils::padTo32Bytes(rewardAddressOutput, utils::PaddingDirection::LEFT);
     callData.data = utils::getFunctionSignature("recipients(address)") + rewardAddressOutput;
 
-    std::string result = provider->callReadFunction(callData);
+    std::string result = provider.callReadFunction(callData);
 
     // This assumes both the returned integers fit into a uint64_t but they are actually uint256 and dont have a good way of storing the 
     // full amount. In tests this will just mean that we need to keep our numbers below the 64bit max.

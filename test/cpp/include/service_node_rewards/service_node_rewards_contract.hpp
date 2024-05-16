@@ -18,7 +18,7 @@ struct Recipient {
 
 struct Contributor {
     std::array<unsigned char, 20> address;
-    std::string                   amount;
+    uint64_t                      amount;
 };
 
 struct ContractServiceNode {
@@ -37,7 +37,7 @@ public:
     static constexpr inline uint64_t STAKING_REQUIREMENT = 100'000'000'000;
 
     // Constructor
-    ServiceNodeRewardsContract(const std::string& _contractAddress, std::shared_ptr<Provider> _provider);
+    ServiceNodeRewardsContract(const std::string& _contractAddress, ethyl::Provider& _provider);
 
     // Method for creating a transaction to add a public key
     Transaction addBLSPublicKey(const std::string& publicKey, const std::string& sig, const std::string& serviceNodePubkey, const std::string& serviceNodeSignature, uint64_t fee);
@@ -60,5 +60,5 @@ public:
 
 private:
     std::string contractAddress;
-    std::shared_ptr<Provider> provider;
+    ethyl::Provider& provider;
 };
